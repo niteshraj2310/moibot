@@ -91,24 +91,22 @@ async def on_snip_save(event):
 @errors_handler
 async def on_snip_list(event):
     """ For .snips command, lists snips saved by you. """
-    if not event.text[0].isalpha() and event.text[0] not in ("/", "#", "@",
-                                                             "!"):
-        try:
-            from userbot.modules.sql_helper.snips_sql import get_snips
-        except AttributeError:
-            await event.edit("`Running on Non-SQL mode!`")
-            return
+    if event.text[0].isalpha() or event.text[0] in ("/", "#", "@", "!"):
+        return
 
-        message = "`No snips available right now.`"
-        all_snips = get_snips()
-        for a_snip in all_snips:
-            if message == "`No snips available right now.`":
-                message = "Available snips:\n"
-                message += f"- `${a_snip.snip}`\n"
-            else:
-                message += f"- `${a_snip.snip}`\n"
+    try:
+        from userbot.modules.sql_helper.snips_sql import get_snips
+    except AttributeError:
+        await event.edit("`Running on Non-SQL mode!`")
+        return
 
-        await event.edit(message)
+    message = "`No snips available right now.`"
+    all_snips = get_snips()
+    for a_snip in all_snips:
+        if message == "`No snips available right now.`":
+            message = "Available snips:\n"
+        message += f"- `${a_snip.snip}`\n"
+    await event.edit(message)
 
 
 @register(outgoing=True, pattern="^.remsnip (.*)")

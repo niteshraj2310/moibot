@@ -58,11 +58,11 @@ async def download(dryb):
             # https://stackoverflow.com/a/761825/4723940
             file_name = file_name.strip()
             head, tail = os.path.split(file_name)
-            if head:
-                if not os.path.isdir(
-                        os.path.join(TEMP_DOWNLOAD_DIRECTORY, head)):
-                    os.makedirs(os.path.join(TEMP_DOWNLOAD_DIRECTORY, head))
-                    file_name = os.path.join(head, tail)
+            if head and not os.path.isdir(
+                os.path.join(TEMP_DOWNLOAD_DIRECTORY, head)
+            ):
+                os.makedirs(os.path.join(TEMP_DOWNLOAD_DIRECTORY, head))
+                file_name = os.path.join(head, tail)
             downloaded_file_name = TEMP_DOWNLOAD_DIRECTORY + "" + file_name
             downloader = SmartDL(url, downloaded_file_name, progress_bar=False)
             downloader.start(blocking=False)
@@ -96,7 +96,6 @@ async def download(dryb):
                         await asyncio.sleep(1)
                 except Exception as e:
                     LOGS.info(str(e))
-                    pass
             if downloader.isSuccessful():
                 await dryb.edit(
                     "Downloaded to `{}` successfully !!\nInitiating upload to Google Drive.."
@@ -109,8 +108,11 @@ async def download(dryb):
             if os.path.exists(input_str):
                 required_file_name = input_str
                 await dryb.edit(
-                    "Found `{}` in local server, initiating upload to Google Drive.."
-                    .format(input_str))
+                    "Found `{}` in local server, initiating upload to Google Drive..".format(
+                        required_file_name
+                    )
+                )
+
             else:
                 await dryb.edit(
                     "File not found in local server. Give me a valid file path !"
@@ -130,8 +132,11 @@ async def download(dryb):
             else:
                 required_file_name = downloaded_file_name
                 await dryb.edit(
-                    "Downloaded to `{}` successfully !!\nInitiating upload to Google Drive.."
-                    .format(downloaded_file_name))
+                    "Downloaded to `{}` successfully !!\nInitiating upload to Google Drive..".format(
+                        required_file_name
+                    )
+                )
+
     if required_file_name:
         #
         if G_DRIVE_AUTH_TOKEN_DATA is not None:
@@ -166,21 +171,22 @@ async def download(dryb):
 @errors_handler
 async def download(set):
     """For .gsetf command, allows you to set path"""
-    if not set.text[0].isalpha() and set.text[0] not in ("/", "#", "@", "!"):
-        if set.fwd_from:
-            return
-        await set.reply("Processing ...")
-        input_str = set.pattern_match.group(1)
-        if input_str:
-            parent_id = input_str
-            await set.edit(
-                "Custom Folder ID set successfully. The next uploads will upload to {parent_id} till `.gdriveclear`"
-            )
-            await set.delete()
-        else:
-            await set.edit(
-                "Use `.gdrivesp <link to GDrive Folder>` to set the folder to upload new files to."
-            )
+    if set.text[0].isalpha() or set.text[0] in ("/", "#", "@", "!"):
+        return
+    if set.fwd_from:
+        return
+    await set.reply("Processing ...")
+    input_str = set.pattern_match.group(1)
+    if input_str:
+        parent_id = input_str
+        await set.edit(
+            "Custom Folder ID set successfully. The next uploads will upload to {parent_id} till `.gdriveclear`"
+        )
+        await set.delete()
+    else:
+        await set.edit(
+            "Use `.gdrivesp <link to GDrive Folder>` to set the folder to upload new files to."
+        )
 
 
 @register(pattern="^.gsetclear$", outgoing=True)
@@ -281,8 +287,7 @@ async def upload_file(http, file_path, file_name, mime_type, event):
                                        body=permissions).execute()
     # Define file instance and get url for download
     file = drive_service.files().get(fileId=response.get('id')).execute()
-    download_url = response.get("webContentLink")
-    return download_url
+    return response.get("webContentLink")
 
 
 @register(pattern="^.gfolder$", outgoing=True)
