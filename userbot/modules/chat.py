@@ -15,25 +15,25 @@ from userbot.events import register, errors_handler
 @errors_handler
 async def useridgetter(target):
     """ For .userid command, returns the ID of the target user. """
-    if not target.text[0].isalpha() and target.text[0] not in ("/", "#", "@",
-                                                               "!"):
-        message = await target.get_reply_message()
-        if message:
-            if not message.forward:
-                user_id = message.sender.id
-                if message.sender.username:
-                    name = "@" + message.sender.username
-                else:
-                    name = "**" + message.sender.first_name + "**"
-
+    if target.text[0].isalpha() or target.text[0] in ("/", "#", "@", "!"):
+        return
+    message = await target.get_reply_message()
+    if message:
+        if not message.forward:
+            user_id = message.sender.id
+            if message.sender.username:
+                name = "@" + message.sender.username
             else:
-                user_id = message.forward.sender.id
-                if message.forward.sender.username:
-                    name = "@" + message.forward.sender.username
-                else:
-                    name = "*" + message.forward.sender.first_name + "*"
-            await target.edit("**Name:** {} \n**User ID:** `{}`".format(
-                name, user_id))
+                name = "**" + message.sender.first_name + "**"
+
+        else:
+            user_id = message.forward.sender.id
+            if message.forward.sender.username:
+                name = "@" + message.forward.sender.username
+            else:
+                name = "*" + message.forward.sender.first_name + "*"
+        await target.edit("**Name:** {} \n**User ID:** `{}`".format(
+            name, user_id))
 
 
 @register(outgoing=True, pattern="^.chatid$")
@@ -48,25 +48,26 @@ async def chatidgetter(chat):
 @errors_handler
 async def log(log_text):
     """ For .log command, forwards a message or the command argument to the bot logs group """
-    if not log_text.text[0].isalpha() and log_text.text[0] not in ("/", "#",
-                                                                   "@", "!"):
-        if BOTLOG:
-            if log_text.reply_to_msg_id:
-                reply_msg = await log_text.get_reply_message()
-                await reply_msg.forward_to(BOTLOG_CHATID)
-            elif log_text.pattern_match.group(1):
-                user = f"#LOG / Chat ID: {log_text.chat_id}\n\n"
-                textx = user + log_text.pattern_match.group(1)
-                await bot.send_message(BOTLOG_CHATID, textx)
-            else:
-                await log_text.edit("`What am I supposed to log?`")
-                return
-            await log_text.edit("`Logged Successfully`")
+    if log_text.text[0].isalpha() or log_text.text[0] in ("/", "#", "@", "!"):
+        return
+
+    if BOTLOG:
+        if log_text.reply_to_msg_id:
+            reply_msg = await log_text.get_reply_message()
+            await reply_msg.forward_to(BOTLOG_CHATID)
+        elif log_text.pattern_match.group(1):
+            user = f"#LOG / Chat ID: {log_text.chat_id}\n\n"
+            textx = user + log_text.pattern_match.group(1)
+            await bot.send_message(BOTLOG_CHATID, textx)
         else:
-            await log_text.edit(
-                "`This feature requires Logging to be enabled!`")
-        sleep(2)
-        await log_text.delete()
+            await log_text.edit("`What am I supposed to log?`")
+            return
+        await log_text.edit("`Logged Successfully`")
+    else:
+        await log_text.edit(
+            "`This feature requires Logging to be enabled!`")
+    sleep(2)
+    await log_text.delete()
 
 
 @register(outgoing=True, pattern="^.kickme$")
@@ -102,22 +103,22 @@ async def unmute_chat(unm_e):
 @errors_handler
 async def mute_chat(mute_e):
     """ For .mutechat command, mute any chat. """
-    if not mute_e.text[0].isalpha() and mute_e.text[0] not in ("/", "#", "@",
-                                                               "!"):
-        try:
-            from userbot.modules.sql_helper.keep_read_sql import kread
-        except AttributeError:
-            await mute_e.edit("`Running on Non-SQL mode!`")
-            return
-        await mute_e.edit(str(mute_e.chat_id))
-        kread(str(mute_e.chat_id))
-        await mute_e.edit("`Shush! This chat will be silenced!`")
-        sleep(2)
-        await mute_e.delete()
-        if BOTLOG:
-            await mute_e.client.send_message(
-                BOTLOG_CHATID,
-                str(mute_e.chat_id) + " was silenced.")
+    if mute_e.text[0].isalpha() or mute_e.text[0] in ("/", "#", "@", "!"):
+        return
+    try:
+        from userbot.modules.sql_helper.keep_read_sql import kread
+    except AttributeError:
+        await mute_e.edit("`Running on Non-SQL mode!`")
+        return
+    await mute_e.edit(str(mute_e.chat_id))
+    kread(str(mute_e.chat_id))
+    await mute_e.edit("`Shush! This chat will be silenced!`")
+    sleep(2)
+    await mute_e.delete()
+    if BOTLOG:
+        await mute_e.client.send_message(
+            BOTLOG_CHATID,
+            str(mute_e.chat_id) + " was silenced.")
 
 
 @register(incoming=True)

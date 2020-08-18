@@ -59,42 +59,47 @@ async def filter_incoming_handler(handler):
 @errors_handler
 async def add_new_filter(new_handler):
     """ For .filter command, allows adding new filters in a chat """
-    if not new_handler.text[0].isalpha() and new_handler.text[0] not in (
-            "/", "#", "@", "!"):
-        try:
-            from userbot.modules.sql_helper.filter_sql import add_filter
-        except AttributeError:
-            await new_handler.edit("`Running on Non-SQL mode!`")
-            return
+    if new_handler.text[0].isalpha() or new_handler.text[0] in (
+        "/",
+        "#",
+        "@",
+        "!",
+    ):
+        return
+    try:
+        from userbot.modules.sql_helper.filter_sql import add_filter
+    except AttributeError:
+        await new_handler.edit("`Running on Non-SQL mode!`")
+        return
 
-        keyword = new_handler.pattern_match.group(1)
-        msg = await new_handler.get_reply_message()
-        if not msg:
-            await new_handler.edit(
-                "`I need something to save as reply to the filter.`")
-        else:
-            snip = {'type': TYPE_TEXT, 'text': msg.message or ''}
-            if msg.media:
-                media = None
-                if isinstance(msg.media, types.MessageMediaPhoto):
-                    media = utils.get_input_photo(msg.media.photo)
-                    snip['type'] = TYPE_PHOTO
-                elif isinstance(msg.media, types.MessageMediaDocument):
-                    media = utils.get_input_document(msg.media.document)
-                    snip['type'] = TYPE_DOCUMENT
-                if media:
-                    snip['id'] = media.id
-                    snip['hash'] = media.access_hash
-                    snip['fr'] = media.file_reference
+    keyword = new_handler.pattern_match.group(1)
+    msg = await new_handler.get_reply_message()
+    if not msg:
+        await new_handler.edit(
+            "`I need something to save as reply to the filter.`")
+    else:
+        snip = {'type': TYPE_TEXT, 'text': msg.message or ''}
+        if msg.media:
+            media = None
+            if isinstance(msg.media, types.MessageMediaPhoto):
+                media = utils.get_input_photo(msg.media.photo)
+                snip['type'] = TYPE_PHOTO
+            elif isinstance(msg.media, types.MessageMediaDocument):
+                media = utils.get_input_document(msg.media.document)
+                snip['type'] = TYPE_DOCUMENT
+            if media:
+                snip['id'] = media.id
+                snip['hash'] = media.access_hash
+                snip['fr'] = media.file_reference
 
-        success = "`Filter` **{}** `{} successfully`"
+    success = "`Filter` **{}** `{} successfully`"
 
-        if add_filter(str(new_handler.chat_id), keyword, snip['text'],
-                      snip['type'], snip.get('id'), snip.get('hash'),
-                      snip.get('fr')) is True:
-            await new_handler.edit(success.format(keyword, 'added'))
-        else:
-            await new_handler.edit(success.format(keyword, 'updated'))
+    if add_filter(str(new_handler.chat_id), keyword, snip['text'],
+                  snip['type'], snip.get('id'), snip.get('hash'),
+                  snip.get('fr')) is True:
+        await new_handler.edit(success.format(keyword, 'added'))
+    else:
+        await new_handler.edit(success.format(keyword, 'updated'))
 
 
 @register(outgoing=True, pattern="^.stop\\s.*")
@@ -153,24 +158,22 @@ async def kick_marie_filter(event):
 @errors_handler
 async def filters_active(event):
     """ For .filters command, lists all of the active filters in a chat. """
-    if not event.text[0].isalpha() and event.text[0] not in ("/", "#", "@",
-                                                             "!"):
-        try:
-            from userbot.modules.sql_helper.filter_sql import get_filters
-        except AttributeError:
-            await event.edit("`Running on Non-SQL mode!`")
-            return
-        transact = "`There are no filters in this chat.`"
-        filters = get_filters(event.chat_id)
+    if event.text[0].isalpha() or event.text[0] in ("/", "#", "@", "!"):
+        return
 
-        for filt in filters:
-            if transact == "`There are no filters in this chat.`":
-                transact = "Active filters in this chat:\n"
-                transact += "👁️ `{}`\n".format(filt.keyword)
-            else:
-                transact += "👁️ `{}`\n".format(filt.keyword)
+    try:
+        from userbot.modules.sql_helper.filter_sql import get_filters
+    except AttributeError:
+        await event.edit("`Running on Non-SQL mode!`")
+        return
+    transact = "`There are no filters in this chat.`"
+    filters = get_filters(event.chat_id)
 
-        await event.edit(transact)
+    for filt in filters:
+        if transact == "`There are no filters in this chat.`":
+            transact = "Active filters in this chat:\n"
+        transact += "👁️ `{}`\n".format(filt.keyword)
+    await event.edit(transact)
 
 
 CMD_HELP.update({
