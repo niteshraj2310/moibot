@@ -28,7 +28,7 @@ python-dotenv
 pytube>=9.5.1
 pytz
 qrcode
-requests>=2.18.4
+requests>=2.33.1
 search-engine-parser
 speedtest-cli>=2.0.2
 sqlalchemy>=1.2
