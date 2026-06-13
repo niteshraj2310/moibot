@@ -25,7 +25,7 @@ pylast
 pySmartDL
 python-barcode
 python-dotenv
-pytube>=9.5.1
+pytube>=15.0.0
 pytz
 qrcode
 requests>=2.18.4
